@@ -136,16 +136,6 @@ PratikAi/
     └── package.json
 ```
 
-## 🎓 Ders İçeriği Uygulaması
-
-| Hafta | Konu | Kod Konumu |
-|-------|------|------------|
-| Hafta 1 | Üretici YZ Temelleri | `gemini_service.py` |
-| Hafta 2 | Etmen Sistemleri | `learning_agent.py` |
-| Hafta 3 | Akıllı Etmen Bileşenleri | `learning_agent.py` |
-| Hafta 5 | Araç Kullanımı ve Planlama | `tools.py`, `learning_agent.py` |
-| Hafta 6 | Çoklu Etmen İşbirliği | `multi_agent_system.py` |
-| Hafta 7 | İleri Etmen Tasarımı | `memory_system.py` |
 
 ## 🔧 Kullanılan Teknolojiler
 
@@ -168,6 +158,8 @@ PratikAi/
 3. "Sınav Oluştur" butonuna tıklayın
 4. Üretilen soruları görüntüleyin
 5. PDF olarak indirin veya sınavı çözün
+6. Konu özeti çıkarın
+7. Özet çıkardıktan sonra kaynakça önerisi alın
 
 ## 🤝 Katkıda Bulunma
 
@@ -184,7 +176,6 @@ Bu proje eğitim amaçlı geliştirilmiştir.
 ## 👤 Yazar
 
 **Ali Erdem BALTACI**  
-Öğrenci No: 21360859011
 
 ## 🔗 Bağlantılar
 
@@ -200,4 +191,5 @@ Bu proje eğitim amaçlı geliştirilmiştir.
 ---
 
 **⭐ Projeyi beğendiyseniz yıldız vermeyi unutmayın!**
+
 
