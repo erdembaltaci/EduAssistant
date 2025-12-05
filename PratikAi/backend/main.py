@@ -70,10 +70,57 @@ def generate_quiz_from_text(
     text: str = Form(...),
     num_questions: int = Form(5),
     question_type: str = Form("çoktan seçmeli"),
-    difficulty: str = Form("orta")
+    difficulty: str = Form("orta"),
+    user_id: str = Form(None)  # Chapter 4: Kullanıcı tercihlerini hatırlama
 ):
-    """Doğrudan metin alıp sınav ve tavsiye üretir."""
-    return generate_questions_from_gemini(text, num_questions, question_type, difficulty)
+    """
+    Doğrudan metin alıp sınav ve tavsiye üretir.
+    Chapter 4: Self-Explanation ve Memory System entegrasyonu
+    """
+    # Chapter 4: Kullanıcı tercihlerini Memory System'den al
+    user_preferences = {}
+    if user_id:
+        user_profile = memory_system.long_term.get_user_profile(user_id)
+        if user_profile:
+            user_preferences = user_profile.get("preferences", {})
+            # Kullanıcı tercihlerini uygula
+            if "preferred_num_questions" in user_preferences:
+                num_questions = user_preferences["preferred_num_questions"]
+            if "preferred_difficulty" in user_preferences:
+                difficulty = user_preferences["preferred_difficulty"]
+    
+    # Agent ile akıl yürütme (Chapter 4: Self-Explanation için)
+    perceived_data = learning_agent.perceive({
+        "text": text,
+        "file_type": "text",
+        "preferences": user_preferences
+    })
+    reasoning_result = learning_agent.reason(perceived_data, goal="generate_quiz")
+    
+    # Kullanıcı seçimlerini uygula
+    reasoning_result["num_questions"] = num_questions
+    reasoning_result["difficulty"] = difficulty
+    
+    # Soruları üret
+    result = generate_questions_from_gemini(text, num_questions, question_type, difficulty)
+    
+    # Chapter 4: Self-Explanation ekle
+    result["explanation"] = reasoning_result.get("explanation", "")
+    result["reasoning"] = {
+        "strategy": reasoning_result.get("strategy"),
+        "weights": learning_agent.self_model["preference_weights"]
+    }
+    
+    # Memory System'e kaydet
+    if user_id:
+        memory_system.long_term.store_learning_history(user_id, {
+            "action": "generate_quiz",
+            "num_questions": num_questions,
+            "difficulty": difficulty,
+            "text_length": len(text)
+        })
+    
+    return result
 
 @app.post("/api/v1/generate-quiz-from-file", tags=["Quiz Generation"])
 async def generate_quiz_from_file(
@@ -118,25 +165,35 @@ def get_agent_state():
 async def agent_generate_quiz(
     text: str = Form(...),
     num_questions: int = Form(5),
-    difficulty: str = Form("orta")
+    difficulty: str = Form("orta"),
+    user_id: str = Form(None)  # Chapter 4: Kullanıcı tercihlerini hatırlama
 ):
     """
     Etmen tabanlı sınav üretimi - Hafta 2, 3, 5: Etmen Mimarisi
+    Chapter 4: Self-Explanation, Meta-Reasoning, Self-Modeling eklendi
     
     Bu endpoint, dersin temel kavramlarını gösterir:
     - Algılama (Perception)
     - Akıl Yürütme (Reasoning)
     - Planlama (Planning)
     - Eylem (Action)
+    - Self-Explanation (Chapter 4: Transparency)
     """
+    # Chapter 4: Kullanıcı tercihlerini Memory System'den al
+    user_preferences = {}
+    if user_id:
+        user_profile = memory_system.long_term.get_user_profile(user_id)
+        if user_profile:
+            user_preferences = user_profile.get("preferences", {})
+    
     # 1. Algılama (Perception) - Hafta 2
     perceived_data = learning_agent.perceive({
         "text": text,
         "file_type": "text",
-        "preferences": {}
+        "preferences": user_preferences
     })
     
-    # 2. Akıl Yürütme (Reasoning) - Hafta 3
+    # 2. Akıl Yürütme (Reasoning) - Hafta 3, Chapter 4: Self-Explanation
     reasoning_result = learning_agent.reason(perceived_data, goal="generate_quiz")
     
     # Planlama parametrelerini güncelle
@@ -156,12 +213,17 @@ async def agent_generate_quiz(
     
     results = learning_agent.act(plan, external_function)
     
+    # Chapter 4: Self-Explanation ekle
+    explanation = learning_agent.get_explanation()
+    
     return {
         "agent_state": learning_agent.get_state(),
         "perception": perceived_data,
         "reasoning": reasoning_result,
         "plan": plan,
-        "results": results.get("soru_uretim", {})
+        "results": results.get("soru_uretim", {}),
+        "explanation": explanation,  # Chapter 4: Self-Explanation
+        "self_model": learning_agent.self_model  # Chapter 4: Self-Modeling
     }
 
 @app.get("/api/v1/tools", tags=["Agent"])
@@ -258,3 +320,94 @@ def switch_context(session_id: str = Form(...)):
     """Bağlam değiştir - Hafta 7: Context Switching"""
     memory_system.switch_context(session_id)
     return {"status": "switched", "new_session_id": session_id}
+
+# --- CHAPTER 4: REFLECTION AND INTROSPECTION ENDPOINT'LERİ ---
+
+@app.post("/api/v1/feedback", tags=["Chapter 4"])
+def submit_feedback(
+    satisfaction: str = Form(...),  # "positive", "negative", "neutral"
+    preferred_difficulty: str = Form(None),
+    preferred_num_questions: int = Form(None),
+    user_id: str = Form(None),
+    explanation: str = Form(None)  # Kullanıcının açıklaması
+):
+    """
+    Chapter 4: Meta-Reasoning - Kullanıcı feedback'i al ve agent'ı öğret
+    Feedback'e göre agent'ın ağırlıklarını ve tercihlerini günceller
+    """
+    feedback_data = {
+        "satisfaction": satisfaction,
+        "preferred_difficulty": preferred_difficulty,
+        "preferred_num_questions": preferred_num_questions,
+        "user_explanation": explanation
+    }
+    
+    # Agent'a feedback'i öğret (Chapter 4: Meta-Reasoning)
+    learning_agent.learn({
+        "user_feedback": feedback_data,
+        "timestamp": None  # Gerçek uygulamada datetime kullanılır
+    })
+    
+    # Memory System'e kaydet
+    if user_id:
+        # Kullanıcı profili güncelle
+        memory_system.long_term.store_user_profile(user_id, {
+            "preferences": {
+                "preferred_difficulty": preferred_difficulty,
+                "preferred_num_questions": preferred_num_questions
+            },
+            "last_feedback": feedback_data
+        })
+        
+        # Öğrenme geçmişine ekle
+        memory_system.long_term.store_learning_history(user_id, {
+            "action": "feedback",
+            "feedback": feedback_data
+        })
+    
+    return {
+        "status": "feedback_received",
+        "agent_updated": True,
+        "new_weights": learning_agent.self_model["preference_weights"],
+        "message": "Agent feedback'inize göre öğrendi ve ağırlıklarını güncelledi."
+    }
+
+@app.get("/api/v1/agent/explanation", tags=["Chapter 4"])
+def get_agent_explanation():
+    """
+    Chapter 4: Self-Explanation - Agent'ın son kararının açıklamasını döndür
+    """
+    return {
+        "explanation": learning_agent.get_explanation(),
+        "reasoning_result": learning_agent.knowledge_base.get("reasoning_result", {}),
+        "preference_weights": learning_agent.self_model["preference_weights"]
+    }
+
+@app.post("/api/v1/agent/update-goals", tags=["Chapter 4"])
+def update_agent_goals(
+    prefer_difficult: bool = Form(False),
+    prefer_personalized: bool = Form(True)
+):
+    """
+    Chapter 4: Self-Modeling - Agent'ın hedeflerini güncelle
+    """
+    learning_agent.update_goals({
+        "prefer_difficult": prefer_difficult,
+        "prefer_personalized": prefer_personalized
+    })
+    
+    return {
+        "status": "goals_updated",
+        "new_goals": learning_agent.self_model["goals"]
+    }
+
+@app.get("/api/v1/agent/self-model", tags=["Chapter 4"])
+def get_agent_self_model():
+    """
+    Chapter 4: Self-Modeling - Agent'ın kendi modelini döndür
+    """
+    return {
+        "self_model": learning_agent.self_model,
+        "feedback_history_count": len(learning_agent.feedback_history),
+        "last_feedback": learning_agent.feedback_history[-1] if learning_agent.feedback_history else None
+    }

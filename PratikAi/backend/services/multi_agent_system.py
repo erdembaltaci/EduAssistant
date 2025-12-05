@@ -47,20 +47,35 @@ class WorkerAgent(LearningAgent):
     def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Görev yürütme - Hafta 6: Çalışan Etmen Davranışı
+        Chapter 4: Self-Explanation ile genişletildi
         Uzmanlık alanına göre görevi yerine getirir
         """
         task_type = task.get("type", "")
         
+        result = {}
+        explanation = f"{self.specialization} uzmanı olarak görevi yerine getiriyorum: {task_type}"
+        
         if self.specialization == "question_generator" and task_type == "generate_questions":
-            return self._generate_questions(task)
+            result = self._generate_questions(task)
+            explanation += f" {task.get('num_questions', 5)} adet {task.get('difficulty', 'orta')} zorlukta soru ürettim."
         elif self.specialization == "summary_generator" and task_type == "generate_summary":
-            return self._generate_summary(task)
+            result = self._generate_summary(task)
+            explanation += " Metinden kısa ve öz bir özet oluşturdum."
         elif self.specialization == "analyzer" and task_type == "analyze":
-            return self._analyze(task)
+            result = self._analyze(task)
+            explanation += " Soruları Bloom taksonomisine göre analiz ettim."
         elif self.specialization == "recommender" and task_type == "recommend":
-            return self._recommend(task)
+            result = self._recommend(task)
+            explanation += " Öğrenci için kaynak önerileri oluşturdum."
         else:
-            return {"error": f"Bu görev {self.specialization} uzmanlığına uygun değil"}
+            result = {"error": f"Bu görev {self.specialization} uzmanlığına uygun değil"}
+            explanation = f"Uyarı: {result['error']}"
+        
+        # Chapter 4: Self-Explanation - Açıklamayı sonuca ekle
+        if isinstance(result, dict):
+            result["explanation"] = explanation
+        
+        return result
     
     def _generate_questions(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Soru üretme görevi"""
