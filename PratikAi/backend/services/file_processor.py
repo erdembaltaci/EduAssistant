@@ -1,12 +1,18 @@
-import easyocr
 import fitz
 import os
 import shutil
 from fastapi import UploadFile
 
-# OCR modelini bu dosyada yüklüyoruz
-reader = easyocr.Reader(['tr', 'en'])
-print("OCR Modeli başarıyla yüklendi.")
+# EasyOCR opsiyonel - yüklü değilse OCR özelliği çalışmayacak
+try:
+    import easyocr
+    reader = easyocr.Reader(['tr', 'en'])
+    EASYOCR_AVAILABLE = True
+    print("OCR Modeli başarıyla yüklendi.")
+except ImportError:
+    EASYOCR_AVAILABLE = False
+    reader = None
+    print("UYARI: EasyOCR yüklü değil. Görsel OCR özelliği kullanılamayacak.")
 
 async def process_uploaded_file(file: UploadFile) -> str:
     """
@@ -29,8 +35,11 @@ async def process_uploaded_file(file: UploadFile) -> str:
                     extracted_text += page.get_text()
         else:
             # Resim ise, EasyOCR ile metni oku
-            result = reader.readtext(file_path)
-            extracted_text = " ".join([item[1] for item in result])
+            if EASYOCR_AVAILABLE and reader:
+                result = reader.readtext(file_path)
+                extracted_text = " ".join([item[1] for item in result])
+            else:
+                raise ValueError("EasyOCR yüklü değil. Görsel OCR özelliği kullanılamıyor. Lütfen PDF dosyası yükleyin.")
     except Exception as e:
         print(f"Dosya işlenirken hata oluştu: {e}")
     finally:

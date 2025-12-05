@@ -97,53 +97,54 @@ def analyze_question_types(questions: List[Dict[str, Any]]) -> str:
 # --- ANA SERVİS FONKSİYONLARI ---
 
 def generate_questions_from_gemini(text: str, num_questions: int, question_type: str, difficulty: str) -> Dict[str, Any]:
-    """Ana sınav üretme fonksiyonu. Gemini'ye istek gönderir ve sonuçları işler."""
-    if not model or not text or len(text.strip()) < 20:
-        return {"questions": [{"error": "Soru üretmek için yetersiz metin veya API hatası."}]}
-    
-    prompt = f"""
-    Aşağıdaki metni analiz et ve bu metinden {num_questions} adet {difficulty} zorluk seviyesinde {question_type} soru oluştur.
-    Eğer soru tipi çoktan seçmeli ise 4 şık ve doğru cevabı belirt.
-    Metin: "{text}"
-    Çoktan seçmeli için örnek çıktı formatı:
-    **1. Soru:** Soru metni burada yer alacak?
-    A) Şık A
-    B) Şık B
-    C) Şık C
-    D) Şık D
-    **Doğru Cevap: B**
     """
+    Ana sınav üretme fonksiyonu. 
+    Fallback mekanizması ile çalışır: Gemini -> OpenAI -> Mock
+    """
+    if not text or len(text.strip()) < 20:
+        return {"questions": [{"error": "Soru üretmek için yetersiz metin."}]}
+    
+    # Fallback mekanizması ile soru üret
+    from services.ai_provider import get_ai_provider_manager
+    
     try:
-        response = model.generate_content(prompt)
-        recommendations = get_recommendations(text)
+        manager = get_ai_provider_manager()
+        result = manager.generate_questions_with_fallback(text, num_questions, question_type, difficulty)
         
-        if question_type == "çoktan seçmeli":
-            parsed_questions = parse_quiz_text(response.text)
-            feedback = analyze_question_types(parsed_questions)
-            return {"questions": parsed_questions, "recommendations": recommendations, "feedback": feedback}
-        else:
-            # Diğer soru tipleri için şimdilik ham metni ve tavsiyeleri döndür.
-            # Geri bildirim şimdilik sadece çoktan seçmeli için çalışıyor.
-            return {"questions": [{"raw_text": response.text}], "recommendations": recommendations, "feedback": None}
+        # Recommendations ekle (Gemini'den bağımsız)
+        try:
+            recommendations = get_recommendations(text)
+            result["recommendations"] = recommendations
+        except:
+            result["recommendations"] = []
+        
+        return result
     except Exception as e:
-        print(f"Gemini API isteği sırasında hata: {e}")
-        return {"questions": [{"error": f"Yapay zeka ile iletişim kurulurken bir hata oluştu: {e}"}]}
+        print(f"❌ Tüm AI provider'lar başarısız: {e}")
+        return {
+            "questions": [{"error": f"AI servisleri şu anda kullanılamıyor: {e}"}],
+            "recommendations": [],
+            "feedback": None,
+            "provider": "none"
+        }
 
 def generate_summary_from_gemini(text: str) -> str:
-    """Metni Gemini API'ye gönderip özetini alır."""
-    if not model or not text or len(text.strip()) < 20:
-        return "Özet üretmek için yetersiz metin veya API hatası."
-    
-    prompt = f"""
-    Aşağıdaki metni analiz et ve ana fikirlerini içeren, yaklaşık 3-4 cümlelik kısa bir özet çıkar.
-    Metin: "{text}"
     """
+    Metin özeti üretme fonksiyonu.
+    Fallback mekanizması ile çalışır: Gemini -> OpenAI -> Mock
+    """
+    if not text or len(text.strip()) < 20:
+        return "Özet üretmek için yetersiz metin."
+    
+    # Fallback mekanizması ile özet üret
+    from services.ai_provider import get_ai_provider_manager
+    
     try:
-        response = model.generate_content(prompt)
-        return response.text
+        manager = get_ai_provider_manager()
+        return manager.generate_summary_with_fallback(text)
     except Exception as e:
-        print(f"Gemini API isteği sırasında hata: {e}")
-        return f"Yapay zeka ile iletişim kurulurken bir hata oluştu: {e}"
+        print(f"❌ Tüm AI provider'lar başarısız: {e}")
+        return f"AI servisleri şu anda kullanılamıyor: {e}"
 
 def get_recommendations(text: str) -> List[Dict[str, str]]:
     """Metinden anahtar kelimeler çıkarır ve arama linkleri oluşturur."""

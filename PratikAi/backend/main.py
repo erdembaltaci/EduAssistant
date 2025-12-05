@@ -22,8 +22,12 @@ load_dotenv()
 # API anahtarını burada oku
 api_key = os.getenv("GOOGLE_API_KEY")
 
-# Gemini servisini okuduğumuz anahtarla başlat
+# Gemini servisini okuduğumuz anahtarla başlat (eski kod - uyumluluk için)
 init_gemini(api_key)
+
+# AI Provider Manager'ı başlat (Fallback mekanizması)
+from services.ai_provider import get_ai_provider_manager
+ai_provider_manager = get_ai_provider_manager()
 
 # Etmen oluştur - Hafta 2: Etmen Sistemleri
 learning_agent = create_learning_agent()
@@ -51,7 +55,15 @@ app.add_middleware(
 @app.get("/api/v1/health", tags=["General"])
 def read_health():
     """Uygulamanın ayakta olup olmadığını kontrol eder."""
-    return {"status": "OK"}
+    # AI Provider durumunu kontrol et
+    current_provider = ai_provider_manager.get_provider()
+    provider_name = current_provider.__class__.__name__ if current_provider else "None"
+    
+    return {
+        "status": "OK",
+        "ai_provider": provider_name,
+        "ai_available": current_provider.is_available() if current_provider else False
+    }
 
 @app.post("/api/v1/generate-quiz-from-text", tags=["Quiz Generation"])
 def generate_quiz_from_text(
