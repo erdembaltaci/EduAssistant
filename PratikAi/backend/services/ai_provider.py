@@ -50,7 +50,15 @@ class GeminiProvider(BaseAIProvider):
                 raise ValueError("Gemini API anahtarı bulunamadı")
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            # Güncel model adı: gemini-2.5-flash veya gemini-2.0-flash
+            try:
+                self.model = genai.GenerativeModel('gemini-2.5-flash')
+            except:
+                try:
+                    self.model = genai.GenerativeModel('gemini-2.0-flash')
+                except:
+                    # Son çare
+                    self.model = genai.GenerativeModel('gemini-pro')
             print("✅ Gemini Provider başarıyla yapılandırıldı")
         except Exception as e:
             print(f"⚠️ Gemini Provider başlatılamadı: {e}")

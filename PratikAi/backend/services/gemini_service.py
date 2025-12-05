@@ -18,7 +18,14 @@ def init_gemini(api_key: str):
         if not api_key:
             raise ValueError("API anahtarı bulunamadı veya boş.")
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # Güncel model adı
+        try:
+            model = genai.GenerativeModel('gemini-2.5-flash')
+        except:
+            try:
+                model = genai.GenerativeModel('gemini-2.0-flash')
+            except:
+                model = genai.GenerativeModel('gemini-pro')
         print("Google Gemini API başarıyla yapılandırıldı.")
     except Exception as e:
         print(f"HATA: Google Gemini API yapılandırılamadı. Hata: {e}")
