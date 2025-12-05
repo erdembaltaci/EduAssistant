@@ -1,0 +1,30 @@
+# PratikAi klasörü dışındaki her şeyi ignore et
+*
+
+# PratikAi klasörünü ve içeriğini dahil et
+!PratikAi/
+!PratikAi/**
+
+# PratikAi içindeki gereksiz dosyaları ignore et
+PratikAi/backend/__pycache__/
+PratikAi/backend/services/__pycache__/
+PratikAi/backend/venv/
+PratikAi/backend/temp_quiz.pdf
+PratikAi/backend/*.pyc
+PratikAi/frontend/node_modules/
+PratikAi/frontend/.next/
+PratikAi/.env
+*.env
+
+# IDE dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS dosyaları
+.DS_Store
+Thumbs.db
+
+# .gitignore dosyasını dahil et
+!.gitignore

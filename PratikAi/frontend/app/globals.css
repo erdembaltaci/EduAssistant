@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/* Base colors and fonts */
+:root {
+  --background-light: #ffffff;
+  --foreground-light: #171717;
+  --background-dark: #0a0a0a;
+  --foreground-dark: #ededed;
+  --primary-color: #4f98ff; /* Soft blue accent color */
+  --secondary-color: #f2b6d2; /* Soft pink accent color */
+  --font-sans: 'Helvetica Neue', Helvetica, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* Custom theme based on light/dark mode */
+@theme inline {
+  --color-background: var(--background-light);
+  --color-foreground: var(--foreground-light);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--background-dark);
+    --color-foreground: var(--foreground-dark);
+  }
+}
+
+/* Body styling */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth scroll and subtle animations */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Soft hover and animation effects */
+a,
+button {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+a:hover,
+button:hover {
+  transform: scale(1.05);
+  color: var(--primary-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Soft background transition */
+section {
+  background-color: var(--color-background);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.5s ease;
+}
+
+section:hover {
+  background-color: var(--primary-color);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Soft glowing effect for interactive elements */
+input,
+textarea,
+select {
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 8px var(--primary-color);
+}
+
+/* Floating animation */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  animation: float 4s ease-in-out infinite;
+}
+
+footer {
+  text-align: center;
+  padding: 1.5rem 0;
+  font-size: 0.9rem;
+  color: var(--foreground-dark);
+  background-color: var(--background-light);
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+footer:hover {
+  background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  footer {
+    background-color: var(--background-dark);
+    color: var(--foreground-dark);
+  }
+
+  footer:hover {
+    background-color: var(--primary-color);
+    color: #ffffff;
+  }
+}
